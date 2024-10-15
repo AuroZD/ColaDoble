@@ -1,5 +1,6 @@
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ColaDoble <Item> implements iterable <Item>
 {
@@ -39,45 +40,27 @@ public class ColaDoble <Item> implements iterable <Item>
         return tamanio;
         }
 
-    public void insertaInicio(Item item) /*Encolar un dato generico*/
-        {
-        if (--IndicePrimero != TIERRA) /* si el que antecede es tierra no se puede introducir nada*/
-        {
-        arreglo[IndicePrimero] = item; /*Se almacena el dato en el anterior al indice*/
-        tamanio++;
-        }
-        else/*Si el que antecede es tierra */
-        {
-        if(!estaLlena()) /*Si no esta llena se puede mover al otro extremo*/
-        {
-        IndicePrimero = MaximaCapacidad - 1 ;
-        arreglo[IndicePrimero] = item;
-        tamanio++;
-        }
-        else
-        {
-        amortizar(tamanio*2); /*redimenciona la pila*/
-        }    
-        }   
-        }
-    
-    public void insertaFinal(Item item) /*Encolar un dato generico*/
+    public void insertaInicio(Item item) /* Mueve el índice hacia atrás primero y luego inserta*/
     {
-    if (++IndiceUltimo == MaximaCapacidad)
+    IndicePrimero = (IndicePrimero - 1 + MaximaCapacidad) % MaximaCapacidad; /*para que sea circular lo disminuyo en uno*/
+    if (estaLlena()) 
     {
-        IndiceUltimo = 0;  /* lo devuelve al inicio*/
+        amortizar(MaximaCapacidad * 2);
     }
-    if (!estaLlena()) 
-     
-    {
-        arreglo[IndiceUltimo] = item;
-        tamanio++;
-    }
-     else {
-      amortizar(tamanio*2); /* Redimensionar el arreglo */
-    }
+    arreglo[IndicePrimero] = item;
+    tamanio++;
+}
 
+public void insertaFinal(Item item)  /*Inserta primero y luego mueve el índice hacia adelante*/
+{
+    if (estaLlena()) 
+    {
+        amortizar(MaximaCapacidad * 2);
     }
+    arreglo[IndiceUltimo] = item;
+    IndiceUltimo = (IndiceUltimo + 1) % MaximaCapacidad; /*para que sea circular lo ahumento en uno*/
+    tamanio++;
+}
 public void amortizar(int TamanioNuevo) /*metodo para cuando la pila este llena o a 1/4 de su capacidad*/
  {
   int i;
@@ -86,28 +69,79 @@ public void amortizar(int TamanioNuevo) /*metodo para cuando la pila este llena 
   {
    arregloCopia[i] = arreglo[(IndicePrimero+i)%MaximaCapacidad];
   }
-  arregloCopia = arreglo;
+  arreglo = arregloCopia;
   IndicePrimero = 0;
   IndiceUltimo = tamanio;
   MaximaCapacidad = TamanioNuevo;
  }
  
- 
-    public Item suprimeInicio() /*Desencolar un dato generico*/
+    /**
+     *
+     * @return
+     * @throws NoSuchElementException
+     */
+    public Item suprimeInicio() throws  NoSuchElementException
+/*Desencolar un dato generico*/
+    {
+    if (estaVacia()) 
+    {
+        throw new NoSuchElementException("Cola Vacia");
+    }
+    Item dato = arreglo[IndicePrimero];
+    IndicePrimero = (IndicePrimero + 1) % MaximaCapacidad; /* forma de hacerlo circular*/
+    tamanio--;
+    if (tamanio == MaximaCapacidad/4)
+    {
+    amortizar(MaximaCapacidad/2);
+    }
+    return dato;
+    }
+    
+     /**
+     *
+     * @return
+     * @throws NoSuchElementException
+     */
+public Item suprimeFinal() throws  NoSuchElementException 
+    /*Desencolar un dato generico*/
 {
-return null;
+    if (estaVacia()) 
+    {
+        throw new NoSuchElementException("Cola Vacia");
+    }
+    Item dato = arreglo[IndiceUltimo];
+    IndiceUltimo = (IndiceUltimo - 1) % MaximaCapacidad; /* forma de hacerlo circular*/
+    tamanio--;
+    if (tamanio == MaximaCapacidad/4)
+    {
+    amortizar(MaximaCapacidad/2);
+    }
+    return dato;
+    }
 
-}
-public Item suprimeFinal() /*Desencolar un dato generico*/
-{
-        return null;
-}
-public Iterator<Item> iterator() 
-        /*retorna un iterador independiente sobre los datos de la cola desde el frente hacia el final*/
-{
+public Iterator<Item> iterator() {
+    return new Iterator<Item>() 
+    {
+        private int actual = IndicePrimero;
+        private int contador = 0;
 
-        return null;
+        @Override
+        public boolean hasNext()
+        {
+            return contador < tamanio;
+        }
 
+        @Override
+        public Item next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Item item = arreglo[actual];
+            actual = (actual + 1) % MaximaCapacidad;
+            contador++;
+            return item;
+        }
+    };
 }
 
 }
